@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 智能AI - 全能关键词助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .keywords-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .keyword-tag {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .keyword-tag:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+        
+        #chat {
+            height: 420px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .msg {
+            margin-bottom: 15px;
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user {
+            justify-content: flex-end;
+        }
+        
+        .user .bubble {
+            background: #667eea;
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .ai .bubble {
+            background: white;
+            color: #333;
+            border-radius: 18px 18px 18px 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .bubble {
+            max-width: 75%;
+            padding: 12px 16px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        #text {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+        }
+        
+        #text:focus {
+            border-color: #667eea;
+        }
+        
+        #send {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        #send:hover {
+            transform: scale(1.02);
+        }
+        
+        .typing {
+            display: inline-block;
+        }
+        
+        .typing::after {
+            content: '...';
+            animation: typing 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes typing {
+            0%, 100% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+        }
+        
+        .weather-icon {
+            font-size: 32px;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>
+            <span>🧠</span>
+            <span>智能AI</span>
+            <span>🤖</span>
+        </h1>
+        <p>关键词检测 | 加减乘除 | 天气 | 故事 | 笑话 | 古诗 | 百科 | 聊天</p>
+        <div class="keywords-cloud">
+            <span class="keyword-tag" data-msg="1+1=？">📝 数学</span>
+            <span class="keyword-tag" data-msg="阿拉善左旗天气">☀️ 天气</span>
+            <span class="keyword-tag" data-msg="讲个伊索寓言">📖 伊索寓言</span>
+            <span class="keyword-tag" data-msg="讲个克雷洛夫寓言">📚 克雷洛夫</span>
+            <span class="keyword-tag" data-msg="讲个笑话">😂 笑话</span>
+            <span class="keyword-tag" data-msg="背首诗">📜 古诗</span>
+            <span class="keyword-tag" data-msg="你好">👋 问候</span>
+            <span class="keyword-tag" data-msg="你真聪明">⭐ 夸奖</span>
+            <span class="keyword-tag" data-msg="讲个脑筋急转弯">🧩 脑筋急转弯</span>
+            <span class="keyword-tag" data-msg="讲个成语故事">📖 成语故事</span>
+        </div>
+    </div>
+    <div id="chat">
+        <div class="msg ai">
+            <div class="bubble">
+                👋 你好！我是智能AI助手！<br><br>
+                我能做这些事：<br>
+                📝 数学计算：+ - ×(x/*) ÷(/) 都支持，例：05x3、10÷2a<br>
+                ☀️ 天气查询：说 "阿拉善左旗天气"（支持全国城市）<br>
+                📖 讲伊索寓言："讲个伊索寓言"<br>
+                📚 讲克雷洛夫寓言："讲个克雷洛夫寓言"<br>
+                📖 成语故事："讲个成语故事"<br>
+                😂 讲笑话："讲个笑话"<br>
+                📜 背古诗："背首诗" 或 "念首诗"<br>
+                🧩 脑筋急转弯："来个脑筋急转弯"<br>
+                💬 聊天："你好"、"你真聪明"<br>
+                ❓ 百科问答："什么是..."<br><br>
+                试试看吧！点上面的关键词试试~
+            </div>
+        </div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="text" placeholder="输入问题，比如：阿拉善左旗天气、05x3、讲个故事..." autocomplete="off">
+        <button id="send">发送</button>
+    </div>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+const text = document.getElementById("text");
+const send = document.getElementById("send");
+
+// 添加消息
+function addMessage(content, isUser, isHtml = false) {
+    const div = document.createElement("div");
+    div.className = `msg ${isUser ? 'user' : 'ai'}`;
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    
+    if (isHtml) {
+        bubble.innerHTML = content;
+    } else {
+        bubble.textContent = content;
+    }
+    
+    div.appendChild(bubble);
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return bubble;
+}
+
+// 模拟打字效果
+async function typeMessage(content, isHtml = false) {
+    const bubble = addMessage('<span class="typing"></span>', false, false);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    if (isHtml) {
+        bubble.innerHTML = content;
+    } else {
+        bubble.textContent = content;
+    }
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// 重写数学计算：兼容加减乘除，乘×/x/*，除÷/，非数字转0，开头0忽略
+function doMath(question) {
+    // 匹配运算符号：+ - × x * ÷ /
+    const opMatch = question.match(/[\+\-\×x\*÷\/]/);
+    if (!opMatch) return null;
+    const op = opMatch[0];
+    // 统一运算符号（方便计算）
+    let calcOp = op;
+    let showOp = op;
+    if (op === '×' || op === 'x' || op === '*') {
+        calcOp = '*';
+        showOp = '×';
+    } else if (op === '÷' || op === '/') {
+        calcOp = '/';
+        showOp = '÷';
+    }
+    // 按符号分割，处理两边的数值
+    const parts = question.split(new RegExp(`[${op}]`, 'g'));
+    if (parts.length < 2) return null;
+    // 数值处理：提取数字→去开头0→转数字，非数字转0
+    const handleNum = (str) => {
+        let numStr = str.replace(/\D/g, "");
+        if (numStr.startsWith("0") && numStr.length > 1) numStr = numStr.slice(1);
+        return Number(numStr) || 0;
+    };
+    const num1 = handleNum(parts[0]);
+    const num2 = handleNum(parts[1]);
+    // 计算逻辑，除数为0单独处理
+    let result;
+    switch (calcOp) {
+        case '+': result = num1 + num2; break;
+        case '-': result = num1 - num2; break;
+        case '*': result = num1 * num2; break;
+        case '/': 
+            result = num2 === 0 ? '除数不能为0' : (Math.round((num1 / num2) * 100) / 100);
+            break;
+        default: return null;
+    }
+    // 拼接返回结果
+    return result === '除数不能为0' 
+        ? `📝 计算：${num1} ${showOp} ${num2} = ${result}`
+        : `📝 计算：${num1} ${showOp} ${num2} = ${result}`;
+}
+
+// 天气查询
+async function getWeather(city) {
+    try {
+        const response = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=%C+|+%t+%w&lang=zh`);
+        if (!response.ok) throw new Error("天气查询失败");
+        let weatherText = await response.text();
+        weatherText = weatherText.replace(/\s+/g, ' ').trim();
+        let parts = weatherText.split('|');
+        let condition = parts[0] || "未知";
+        let temp = parts[1] || "?";
+        let wind = parts[2] || "";
+        // 天气图标映射
+        const icons = {
+            'Sunny': '☀️', 'Clear': '🌙', 'Cloudy': '☁️', 'Partly cloudy': '⛅',
+            'Overcast': '☁️', 'Rain': '🌧️', 'Light rain': '🌦️', 'Snow': '❄️',
+            'Thunder': '⛈️', 'Fog': '🌫️'
+        };
+        let icon = '🌡️';
+        for (let [key, value] of Object.entries(icons)) {
+            if (condition.includes(key)) {
+                icon = value;
+                break;
+            }
+        }
+        return `${icon} ${city}天气：${condition}，${temp}，${wind}`;
+    } catch (error) {
+        const mockWeather = {
+            "阿拉善左旗": "☀️ 阿拉善左旗：晴天，25°C，西北风3级",
+            "北京": "🌤️ 北京：多云转晴，22°C，南风2级",
+            "上海": "🌧️ 上海：小雨，20°C，东风3级",
+            "默认": "🌡️ 天气查询服务暂时不可用，稍后再试~"
+        };
+        for (let [key, value] of Object.entries(mockWeather)) {
+            if (city.includes(key)) return value;
+        }
+        return mockWeather["默认"];
+    }
+}
+
+// 故事库
+const stories = {
+    "伊索寓言": [
+        "🐺 狼来了：有个放羊娃觉得无聊，大喊'狼来了'骗村民。村民们被骗了几次后不信了。后来狼真来了，没人来救，羊都被吃了。这个故事告诉我们：说谎会失去别人的信任！",
+        "🐢 龟兔赛跑：兔子嘲笑乌龟跑得慢，乌龟不服气要比赛。兔子跑太快就睡觉了，乌龟坚持慢慢爬，最后赢了。这个故事告诉我们：坚持就是胜利！",
+        "🦊 狐狸和葡萄：狐狸想吃葡萄，跳了好几次都够不着，就说'这葡萄肯定是酸的'。这个故事告诉我们：吃不到就说酸，是在自我安慰。",
+        "🐜 蚂蚁和蚱蜢：夏天蚂蚁辛苦存粮，蚱蜢只知道唱歌。冬天到了，蚂蚁有吃的，蚱蜢饿着肚子。这个故事告诉我们：要勤劳，不能只顾享乐！"
+    ],
+    "克雷洛夫寓言": [
+        "🐒 猴子和眼镜：老猴子听说眼镜能让人看清楚，买了一堆戴来戴去，还是看不见，气得摔碎了。这个故事告诉我们：不懂怎么用，再好的东西也没用。",
+        "🐺 狼和小羊：狼想吃小羊，找各种借口说小羊弄脏了它的水。小羊说'我在下游，怎么可能弄脏上游的水？'狼说'不管，反正我要吃你'。这个故事告诉我们：坏人想干坏事，总能找到借口。",
+        "🦢 天鹅、梭鱼和虾：天鹅往天上拉，梭鱼往水里拉，虾往后拉，车一动不动。这个故事告诉我们：不团结，什么事都做不成！"
+    ],
+    "成语故事": [
+        "📖 守株待兔：农夫捡到一只撞树的兔子，就天天守着树等兔子，结果地荒了，再也没捡到兔子。",
+        "🎋 掩耳盗铃：小偷捂着自己耳朵去偷铃铛，以为别人也听不见。",
+        "🦷 画蛇添足：几个人比赛画蛇，有人画太快给蛇加了脚，结果输了。",
+        "🐉 叶公好龙：叶公特别喜欢龙，家里到处画龙。真龙听说了来看他，他吓得躲起来。"
+    ]
+};
+
+// 讲故事
+function tellStory(type) {
+    if (type.includes("伊索")) {
+        const story = stories["伊索寓言"][Math.floor(Math.random() * stories["伊索寓言"].length)];
+        return `📖 【伊索寓言】\n${story}`;
+    } else if (type.includes("克雷洛夫")) {
+        const story = stories["克雷洛夫寓言"][Math.floor(Math.random() * stories["克雷洛夫寓言"].length)];
+        return `📖 【克雷洛夫寓言】\n${story}`;
+    } else if (type.includes("成语")) {
+        const story = stories["成语故事"][Math.floor(Math.random() * stories["成语故事"].length)];
+        return `📖 【成语故事】\n${story}`;
+    } else {
+        const allStories = [...stories["伊索寓言"], ...stories["克雷洛夫寓言"], ...stories["成语故事"]];
+        const story = allStories[Math.floor(Math.random() * allStories.length)];
+        return `📖 给你讲个故事：\n${story}`;
+    }
+}
+
+// 笑话库
+const jokes = [
+    "为什么数学书总是很忧伤？因为它有太多问题。😂",
+    "为什么鸡蛋去上学？因为它要考（烤）试！🥚",
+    "什么水果会打电话？梨（铃）啊！🍐",
+    "为什么小明考试总是睡觉？因为他想做梦考！😴",
+    "鱼为什么不上学？因为怕被鱿鱼（由于）！🐟",
+    "什么动物最会做饭？章鱼（章鱼烧）！🐙",
+    "为什么太阳戴墨镜？因为它太亮（靓）了！😎"
+];
+
+// 古诗库
+const poems = [
+    "🌙 床前明月光，疑是地上霜。举头望明月，低头思故乡。——李白《静夜思》",
+    "🌸 春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。——孟浩然《春晓》",
+    "🌾 锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。——李绅《悯农》",
+    "⛰️ 白日依山尽，黄河入海流。欲穷千里目，更上一层楼。——王之涣《登鹳雀楼》",
+    "🍃 离离原上草，一岁一枯荣。野火烧不尽，春风吹又生。——白居易《赋得古原草送别》",
+    "🦢 鹅鹅鹅，曲项向天歌。白毛浮绿水，红掌拨清波。——骆宾王《咏鹅》"
+];
+
+// 脑筋急转弯
+const riddles = [
+    "🤔 什么东西越洗越脏？\n💡 答案：水！",
+    "🤔 什么字人人都会念错？\n💡 答案：'错'字！",
+    "🤔 什么东西越热越爱出来？\n💡 答案：汗！",
+    "🤔 什么门永远关不上？\n💡 答案：球门！"
+];
+
+// 百科问答
+function get百科(question) {
+    const q = question.toLowerCase();
+    if (q.includes("太阳")) return "☀️ 太阳是太阳系的中心恒星，表面温度约5500°C！";
+    if (q.includes("月亮")) return "🌙 月亮是地球的卫星，距离地球约38万公里。";
+    if (q.includes("地球")) return "🌍 地球是太阳系第三颗行星，目前已知唯一有生命的星球！";
+    if (q.includes("恐龙")) return "🦕 恐龙生活在2.3亿年前，灭绝于6600万年前。";
+    if (q.includes("长城")) return "🏯 长城是中国古代防御工程，总长超过2万公里！";
+    if (q.includes("熊猫")) return "🐼 大熊猫是中国的国宝，喜欢吃竹子！";
+    return null;
+}
+
+// 核心关键词检测
+async function ask(question) {
+    const q = question.toLowerCase();
+    
+    // 问候
+    if (q.includes("你好") || q.includes("嗨") || q.includes("hi") || q.includes("hello")) {
+        const greetings = ["你好呀！👋", "嘿！今天过得怎么样？😊", "嗨！有什么可以帮你的？🤗", "你好！我是智能AI，随便问~"];
+        await typeMessage(greetings[Math.floor(Math.random() * greetings.length)]);
+        return;
+    }
+    
+    // 数学计算（优先级最高）
+    const mathResult = doMath(question);
+    if (mathResult) {
+        await typeMessage(mathResult);
+        return;
+    }
+    
+    // 天气查询
+    if (q.includes("天气")) {
+        let city = question.replace(/天气/g, '').trim();
+        if (!city) city = "阿拉善左旗";
+        await typeMessage("🌤️ 正在查询天气...");
+        const weather = await getWeather(city);
+        await typeMessage(weather);
+        return;
+    }
+    
+    // 故事/寓言
+    if (q.includes("故事") || q.includes("寓言")) {
+        let storyType = "";
+        if (q.includes("伊索")) storyType = "伊索";
+        else if (q.includes("克雷洛夫")) storyType = "克雷洛夫";
+        else if (q.includes("成语")) storyType = "成语";
+        await typeMessage(tellStory(storyType));
+        return;
+    }
+    
+    // 笑话
+    if (q.includes("笑话") || q.includes("搞笑")) {
+        const joke = jokes[Math.floor(Math.random() * jokes.length)];
+        await typeMessage(`😂 ${joke}`);
+        return;
+    }
+    
+    // 古诗
+    if (q.includes("古诗") || q.includes("诗") || q.includes("背诗") || q.includes("念诗")) {
+        const poem = poems[Math.floor(Math.random() * poems.length)];
+        await typeMessage(`📜 ${poem}`);
+        return;
+    }
+    
+    // 脑筋急转弯
+    if (q.includes("脑筋") || q.includes("急转弯")) {
+        const riddle = riddles[Math.floor(Math.random() * riddles.length)];
+        await typeMessage(`🧩 ${riddle}`);
+        return;
+    }
+    
+    // 百科
+    const百科Result = get百科(q);
+    if (百科Result) {
+        await typeMessage(`📚 ${百科Result}`);
+        return;
+    }
+    
+    // 夸奖
+    if (q.includes("你真") || q.includes("厉害") || q.includes("聪明") || q.includes("棒")) {
+        const replies = ["嘿嘿，谢谢夸奖！😊", "没有啦，我就是个简单的AI～", "你也很厉害！👍", "我会继续努力的！💪"];
+        await typeMessage(replies[Math.floor(Math.random() * replies.length)]);
+        return;
+    }
+    
+    // 关于自己
+    if (q.includes("你是谁") || q.includes("叫什么")) {
+        await typeMessage("我是智能AI助手！我会算数、查天气、讲故事、背古诗、讲笑话、脑筋急转弯，还会百科问答！虽然有点傻，但很努力！🤖");
+        return;
+    }
+    
+    // 帮助/功能
+    if (q.includes("帮助") || q.includes("能做什么") || q.includes("功能")) {
+        await typeMessage("我能做的事：\n📝 数学计算（+ - ×(x/*) ÷(/)）\n☀️ 查天气（如 北京天气）\n📖 讲伊索寓言/克雷洛夫寓言/成语故事\n😂 讲笑话\n📜 背古诗\n🧩 脑筋急转弯\n📚 百科问答（如 什么是熊猫）\n💬 陪你聊天！");
+        return;
+    }
+    
+    // 默认回复
+    const defaultReplies = [
+        "这个我还不太会，你可以试试：\n• 数学：05x3、10÷2a、8-3\n• 天气：北京天气\n• 故事：讲个伊索寓言\n• 笑话：讲个笑话\n• 古诗：背首诗\n• 脑筋急转弯",
+        "🤔 我听不太懂，试试这些关键词：\n天气、故事、笑话、古诗、数学、脑筋急转弯、百科",
+        "我的功能有：数学加减乘除、天气查询、讲故事、讲笑话、背古诗、脑筋急转弯！试试看~"
+    ];
+    await typeMessage(defaultReplies[Math.floor(Math.random() * defaultReplies.length)]);
+}
+
+// 发送按钮点击
+send.onclick = async () => {
+    const q = text.value.trim();
+    if (!q) return;
+    addMessage(q, true);
+    text.value = "";
+    await ask(q);
+};
+
+// 回车发送
+text.addEventListener("keypress", e => {
+    if (e.key === "Enter") send.click();
+});
+
+// 关键词标签点击
+document.querySelectorAll('.keyword-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+        const msg = tag.dataset.msg;
+        text.value = msg;
+        send.click();
+    });
+});
+</script>
+</body>
+</html>
