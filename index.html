@@ -435,6 +435,20 @@ function get百科(question) {
 async function ask(question) {
     const q = question.toLowerCase();
     
+    // ⭐⭐⭐ 夸奖功能（放在最前面，确保能触发！）⭐⭐⭐
+    if (q.includes("你真") || q.includes("厉害") || q.includes("聪明") || q.includes("棒") || q.includes("牛逼") || q.includes("牛")) {
+        const replies = [
+            "嘿嘿，谢谢夸奖！😊", 
+            "没有啦，我就是个简单的AI～", 
+            "你也很厉害！👍", 
+            "我会继续努力的！💪",
+            "被你夸得我都不好意思了 🤖",
+            "还行还行，主要是你教得好！🎓"
+        ];
+        await typeMessage(replies[Math.floor(Math.random() * replies.length)]);
+        return;
+    }
+    
     // 问候
     if (q.includes("你好") || q.includes("嗨") || q.includes("hi") || q.includes("hello")) {
         const greetings = ["你好呀！👋", "嘿！今天过得怎么样？😊", "嗨！有什么可以帮你的？🤗", "你好！我是智能AI，随便问~"];
@@ -494,13 +508,6 @@ async function ask(question) {
     const百科Result = get百科(q);
     if (百科Result) {
         await typeMessage(`📚 ${百科Result}`);
-        return;
-    }
-    
-    // 夸奖
-    if (q.includes("你真") || q.includes("厉害") || q.includes("聪明") || q.includes("棒")) {
-        const replies = ["嘿嘿，谢谢夸奖！😊", "没有啦，我就是个简单的AI～", "你也很厉害！👍", "我会继续努力的！💪"];
-        await typeMessage(replies[Math.floor(Math.random() * replies.length)]);
         return;
     }
     
