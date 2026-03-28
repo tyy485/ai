@@ -189,12 +189,6 @@
             75% { content: '...'; }
         }
         
-        .weather-icon {
-            font-size: 32px;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -208,7 +202,6 @@
             border-radius: 3px;
         }
 
-        /* 设备适配小样式 */
         @media screen and (max-width: 480px) {
             .header h1 {
                 font-size: 24px;
@@ -234,15 +227,14 @@
             <span>智能AI</span>
             <span>🤖</span>
         </h1>
-        <p>设备检测 | 公历/农历日期 | 随机数学算式 | 天气 | 故事 | 笑话 | 古诗 | 百科</p>
-        <!-- 整合：设备检测+公历+农历 功能按钮区 -->
+        <p>翻译 | 设备检测 | 公历/农历 | 天气 | 故事 | 笑话 | 古诗 | 百科</p>
         <div class="func-buttons">
-            <button class="func-btn" id="detectDevice">检测设备</button>
-            <button class="func-btn" id="solarDate">公历日期</button>
-            <button class="func-btn" id="lunarDate">农历日期</button>
+            <button class="func-btn" id="translateBtn">🌐 翻译模式</button>
+            <button class="func-btn" id="detectDevice">📱 检测设备</button>
+            <button class="func-btn" id="solarDate">📅 公历日期</button>
+            <button class="func-btn" id="lunarDate">🌙 农历日期</button>
         </div>
         <div class="keywords-cloud">
-            <!-- 随机数学算式标签 -->
             <span class="keyword-tag" id="mathRandom">📝 随机数学</span>
             <span class="keyword-tag" data-msg="阿拉善左旗天气">☀️ 天气</span>
             <span class="keyword-tag" data-msg="讲个伊索寓言">📖 伊索寓言</span>
@@ -259,23 +251,27 @@
         <div class="msg ai">
             <div class="bubble">
                 👋 你好！我是智能AI助手！<br><br>
-                📱💻 点击顶部【检测设备】可识别手机/电脑<br>
-                📅 点击【公历日期/农历日期】查当日日期（含星期，联网/本地都能用）<br>
-                📝 点击【随机数学】可随机出预设算式计算<br>
-                其他功能：天气查询、寓言/成语故事、笑话、古诗、脑筋急转弯、日常聊天～<br><br>
-                快来点击顶部按钮试试吧！
+                🌐 点击【翻译模式】后输入单词，比如输入"apple"会翻译成"苹果"<br>
+                支持网络语翻译：lol→哈哈、sus→可疑<br>
+                点击其他按钮：查天气、讲故事、背古诗、脑筋急转弯等～<br><br>
+                快来试试吧！
             </div>
         </div>
     </div>
     <div class="input-area">
-        <input type="text" id="text" placeholder="输入问题，比如：北京天气、讲个笑话..." autocomplete="off">
+        <input type="text" id="text" placeholder="输入问题，比如：apple、北京天气、讲个笑话..." autocomplete="off">
         <button id="send">发送</button>
     </div>
 </div>
+
 <script>
 const chat = document.getElementById("chat");
 const text = document.getElementById("text");
 const send = document.getElementById("send");
+
+// 翻译模式开关
+let translateMode = false;
+
 // 添加消息
 function addMessage(content, isUser, isHtml = false) {
     const div = document.createElement("div");
@@ -294,6 +290,7 @@ function addMessage(content, isUser, isHtml = false) {
     chat.scrollTop = chat.scrollHeight;
     return bubble;
 }
+
 // 模拟打字效果
 async function typeMessage(content, isHtml = false) {
     const bubble = addMessage('<span class="typing"></span>', false, false);
@@ -306,20 +303,63 @@ async function typeMessage(content, isHtml = false) {
     }
     chat.scrollTop = chat.scrollHeight;
 }
-// 1. 设备检测（改为按钮触发，无外网可用）
+
+// ========== 翻译功能 ==========
+// 基础词库（中英互译）
+const translateDict = {
+    // 英译中
+    "apple": "苹果", "banana": "香蕉", "orange": "橘子", "grape": "葡萄",
+    "watermelon": "西瓜", "strawberry": "草莓", "mango": "芒果", "peach": "桃子",
+    "pear": "梨", "pineapple": "菠萝", "cherry": "樱桃", "lemon": "柠檬",
+    "dog": "狗", "cat": "猫", "bird": "鸟", "fish": "鱼", "rabbit": "兔子",
+    "monkey": "猴子", "elephant": "大象", "tiger": "老虎", "lion": "狮子",
+    "panda": "熊猫", "dinosaur": "恐龙", "hello": "你好", "hi": "嗨",
+    "good": "好", "bad": "坏", "big": "大", "small": "小", "hot": "热",
+    "cold": "冷", "happy": "开心", "sad": "难过", "love": "爱",
+    // 网络语预设
+    "lol": "哈哈", "sus": "可疑", "brb": "马上回来", "gtg": "要走了",
+    "omg": "天啊", "lmao": "笑死", "idk": "不知道", "imo": "我觉得",
+    // 中译英
+    "苹果": "apple", "香蕉": "banana", "橘子": "orange", "葡萄": "grape",
+    "西瓜": "watermelon", "草莓": "strawberry", "芒果": "mango", "桃子": "peach",
+    "梨": "pear", "菠萝": "pineapple", "樱桃": "cherry", "柠檬": "lemon",
+    "狗": "dog", "猫": "cat", "鸟": "bird", "鱼": "fish", "兔子": "rabbit",
+    "猴子": "monkey", "大象": "elephant", "老虎": "tiger", "狮子": "lion",
+    "熊猫": "panda", "恐龙": "dinosaur", "你好": "hello", "嗨": "hi",
+    "好": "good", "坏": "bad", "大": "big", "小": "small", "热": "hot",
+    "冷": "cold", "开心": "happy", "难过": "sad", "爱": "love"
+};
+
+// 翻译函数
+function translateWord(word) {
+    const lowerWord = word.toLowerCase().trim();
+    // 先查词库
+    if (translateDict[lowerWord]) {
+        return `🌐 翻译：${word} → ${translateDict[lowerWord]}`;
+    }
+    // 检查是否包含字母（英文单词检测）
+    if (/[a-zA-Z]/.test(word)) {
+        return `🌐 这个词我还没学过：${word}\n💡 试试这些：apple、banana、hello、lol、sus...`;
+    }
+    // 中文检测
+    if (/[\u4e00-\u9fa5]/.test(word)) {
+        return `🌐 这个词我还没学过：${word}\n💡 试试这些：苹果、香蕉、你好、开心...`;
+    }
+    return `🌐 不认识这个词：${word}，试试输入 apple、lol、苹果 之类的吧~`;
+}
+
+// 设备检测
 function detectDevice() {
     const userAgent = navigator.userAgent.toLowerCase();
-    let deviceType = "💻 电脑设备（Windows/Mac/Linux等）";
+    let deviceType = "💻 电脑设备";
     if (/(mobile|android|iphone|ipad|ipod|blackberry|iemobile|opera mini)/.test(userAgent)) {
         deviceType = "📱 移动设备（手机/平板）";
     }
     typeMessage(`✅ 设备检测结果：${deviceType}`);
 }
-// 2. 农历转换核心方法（本地计算，无需联网）
+
+// 农历转换核心方法
 function solar2lunar(date) {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
     const lunarData = [0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
         0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
         0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
@@ -395,7 +435,8 @@ function solar2lunar(date) {
         return (lunarData[y - 1900] & (0x10000 >> m)) ? 30 : 29;
     }
 }
-// 3. 获取公历日期（联网优先，无网调用系统时间，含星期）
+
+// 公历日期
 async function getSolarDate() {
     try {
         const res = await fetch('https://worldtimeapi.org/api/ip');
@@ -407,12 +448,8 @@ async function getSolarDate() {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
-            const hour = String(date.getHours()).padStart(2, '0');
-            const minute = String(date.getMinutes()).padStart(2, '0');
-            return `📅 【公历日期（联网精准）】\n${year}年${month}月${day}日 ${week}\n当前时间：${hour}:${minute}`;
-        } else {
-            throw new Error('联网失败');
-        }
+            return `📅 【公历日期（联网）】\n${year}年${month}月${day}日 ${week}`;
+        } else throw new Error();
     } catch (e) {
         const now = new Date();
         const weekList = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -420,10 +457,11 @@ async function getSolarDate() {
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
-        return `📅 【公历日期（本地系统时间）】\n${year}年${month}月${day}日 ${week}\n（无网络，时间为设备本地时间）`;
+        return `📅 【公历日期（本地）】\n${year}年${month}月${day}日 ${week}`;
     }
 }
-// 4. 获取农历日期（联网优先，无网本地计算，含星期）
+
+// 农历日期
 async function getLunarDate() {
     try {
         const res = await fetch('https://api.vvhan.com/api/lunar?date=' + new Date().toLocaleDateString());
@@ -431,41 +469,29 @@ async function getLunarDate() {
             const data = await res.json();
             const weekList = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
             const week = weekList[new Date().getDay()];
-            return `🌙 【农历日期（联网精准）】\n${data.lunarYear}年${data.lunarMonth}${data.lunarDay} ${week}\n公历对应：${data.solarDate}`;
-        } else {
-            throw new Error('联网失败');
-        }
+            return `🌙 【农历日期（联网）】\n${data.lunarYear}年${data.lunarMonth}${data.lunarDay} ${week}`;
+        } else throw new Error();
     } catch (e) {
         const now = new Date();
         const weekList = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         const week = weekList[now.getDay()];
         const lunar = solar2lunar(now);
-        const solarYear = now.getFullYear();
-        const solarMonth = String(now.getMonth() + 1).padStart(2, '0');
-        const solarDay = String(now.getDate()).padStart(2, '0');
-        return `🌙 【农历日期（本地计算）】\n${lunar.year}年${lunar.isLeap ? '闰' : ''}${lunar.monthName}${lunar.dayName} ${week}\n公历对应：${solarYear}年${solarMonth}月${solarDay}日\n（无网络，农历为本地计算结果）`;
+        return `🌙 【农历日期（本地）】\n${lunar.year}年${lunar.isLeap ? '闰' : ''}${lunar.monthName}${lunar.dayName} ${week}`;
     }
 }
-// 5. 随机数学算式（预设6个算式，点击随机挑一个）
+
+// 随机数学算式
 const mathFormulas = ["1+1", "5+5", "3×8", "6-2", "100-1", "546+64"];
-function getRandomMathFormula() {
-    const randomIndex = Math.floor(Math.random() * mathFormulas.length);
-    return mathFormulas[randomIndex];
-}
-// 数学计算：兼容加减乘除，乘×/x/*，除÷/
+function getRandomMathFormula() { return mathFormulas[Math.floor(Math.random() * mathFormulas.length)]; }
+
+// 数学计算
 function doMath(question) {
     const opMatch = question.match(/[\+\-\×x\*÷\/]/);
     if (!opMatch) return null;
     const op = opMatch[0];
-    let calcOp = op;
-    let showOp = op;
-    if (op === '×' || op === 'x' || op === '*') {
-        calcOp = '*';
-        showOp = '×';
-    } else if (op === '÷' || op === '/') {
-        calcOp = '/';
-        showOp = '÷';
-    }
+    let calcOp = op, showOp = op;
+    if (op === '×' || op === 'x' || op === '*') { calcOp = '*'; showOp = '×'; }
+    else if (op === '÷' || op === '/') { calcOp = '/'; showOp = '÷'; }
     const parts = question.split(new RegExp(`[${op}]`, 'g'));
     if (parts.length < 2) return null;
     const handleNum = (str) => {
@@ -480,220 +506,134 @@ function doMath(question) {
         case '+': result = num1 + num2; break;
         case '-': result = num1 - num2; break;
         case '*': result = num1 * num2; break;
-        case '/': 
-            result = num2 === 0 ? '除数不能为0' : (Math.round((num1 / num2) * 100) / 100);
-            break;
+        case '/': result = num2 === 0 ? '除数不能为0' : (Math.round((num1 / num2) * 100) / 100); break;
         default: return null;
     }
-    return result === '除数不能为0' 
-        ? `📝 计算：${num1} ${showOp} ${num2} = ${result}`
-        : `📝 计算：${num1} ${showOp} ${num2} = ${result}`;
+    return `📝 计算：${num1} ${showOp} ${num2} = ${result}`;
 }
+
 // 天气查询
 async function getWeather(city) {
     try {
         const response = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=%C+|+%t+%w&lang=zh`);
-        if (!response.ok) throw new Error("天气查询失败");
+        if (!response.ok) throw new Error();
         let weatherText = await response.text();
         weatherText = weatherText.replace(/\s+/g, ' ').trim();
         let parts = weatherText.split('|');
         let condition = parts[0] || "未知";
         let temp = parts[1] || "?";
         let wind = parts[2] || "";
-        const icons = {
-            'Sunny': '☀️', 'Clear': '🌙', 'Cloudy': '☁️', 'Partly cloudy': '⛅',
-            'Overcast': '☁️', 'Rain': '🌧️', 'Light rain': '🌦️', 'Snow': '❄️',
-            'Thunder': '⛈️', 'Fog': '🌫️'
-        };
+        const icons = { 'Sunny': '☀️', 'Clear': '🌙', 'Cloudy': '☁️', 'Partly cloudy': '⛅', 'Overcast': '☁️', 'Rain': '🌧️', 'Light rain': '🌦️', 'Snow': '❄️', 'Thunder': '⛈️', 'Fog': '🌫️' };
         let icon = '🌡️';
-        for (let [key, value] of Object.entries(icons)) {
-            if (condition.includes(key)) {
-                icon = value;
-                break;
-            }
-        }
+        for (let [key, value] of Object.entries(icons)) if (condition.includes(key)) { icon = value; break; }
         return `${icon} ${city}天气：${condition}，${temp}，${wind}`;
     } catch (error) {
-        const mockWeather = {
-            "阿拉善左旗": "☀️ 阿拉善左旗：晴天，25°C，西北风3级",
-            "北京": "🌤️ 北京：多云转晴，22°C，南风2级",
-            "上海": "🌧️ 上海：小雨，20°C，东风3级",
-            "默认": "🌡️ 天气查询服务暂时不可用，稍后再试~"
-        };
-        for (let [key, value] of Object.entries(mockWeather)) {
-            if (city.includes(key)) return value;
-        }
-        return mockWeather["默认"];
+        const mock = { "阿拉善左旗": "☀️ 阿拉善左旗：晴天，25°C，西北风3级", "北京": "🌤️ 北京：多云转晴，22°C", "上海": "🌧️ 上海：小雨，20°C", "默认": "🌡️ 天气查询失败，稍后再试~" };
+        for (let [key, value] of Object.entries(mock)) if (city.includes(key)) return value;
+        return mock["默认"];
     }
 }
+
 // 故事库
 const stories = {
-    "伊索寓言": [
-        "🐺 狼来了：有个放羊娃觉得无聊，大喊'狼来了'骗村民。村民们被骗了几次后不信了。后来狼真来了，没人来救，羊都被吃了。这个故事告诉我们：说谎会失去别人的信任！",
-        "🐢 龟兔赛跑：兔子嘲笑乌龟跑得慢，乌龟不服气要比赛。兔子跑太快就睡觉了，乌龟坚持慢慢爬，最后赢了。这个故事告诉我们：坚持就是胜利！",
-        "🦊 狐狸和葡萄：狐狸想吃葡萄，跳了好几次都够不着，就说'这葡萄肯定是酸的'。这个故事告诉我们：吃不到就说酸，是在自我安慰。",
-        "🐜 蚂蚁和蚱蜢：夏天蚂蚁辛苦存粮，蚱蜢只知道唱歌。冬天到了，蚂蚁有吃的，蚱蜢饿着肚子。这个故事告诉我们：要勤劳，不能只顾享乐！"
-    ],
-    "克雷洛夫寓言": [
-        "🐒 猴子和眼镜：老猴子听说眼镜能让人看清楚，买了一堆戴来戴去，还是看不见，气得摔碎了。这个故事告诉我们：不懂怎么用，再好的东西也没用。",
-        "🐺 狼和小羊：狼想吃小羊，找各种借口说小羊弄脏了它的水。小羊说'我在下游，怎么可能弄脏上游的水？'狼说'不管，反正我要吃你'。这个故事告诉我们：坏人想干坏事，总能找到借口。",
-        "🦢 天鹅、梭鱼和虾：天鹅往天上拉，梭鱼往水里拉，虾往后拉，车一动不动。这个故事告诉我们：不团结，什么事都做不成！"
-    ],
-    "成语故事": [
-        "📖 守株待兔：农夫捡到一只撞树的兔子，就天天守着树等兔子，结果地荒了，再也没捡到兔子。",
-        "🎋 掩耳盗铃：小偷捂着自己耳朵去偷铃铛，以为别人也听不见。",
-        "🦷 画蛇添足：几个人比赛画蛇，有人画太快给蛇加了脚，结果输了。",
-        "🐉 叶公好龙：叶公特别喜欢龙，家里到处画龙。真龙听说了来看他，他吓得躲起来。"
-    ]
+    "伊索寓言": ["🐺 狼来了：说谎会失去信任！", "🐢 龟兔赛跑：坚持就是胜利！", "🦊 狐狸和葡萄：吃不到说酸", "🐜 蚂蚁和蚱蜢：要勤劳！"],
+    "克雷洛夫寓言": ["🐒 猴子和眼镜：不会用再好的也没用", "🐺 狼和小羊：坏人总有借口", "🦢 天鹅、梭鱼和虾：不团结事不成"],
+    "成语故事": ["📖 守株待兔：别想不劳而获", "🎋 掩耳盗铃：自欺欺人", "🦷 画蛇添足：多此一举", "🐉 叶公好龙：表面喜欢"]
 };
-// 讲故事
 function tellStory(type) {
-    if (type.includes("伊索")) {
-        const story = stories["伊索寓言"][Math.floor(Math.random() * stories["伊索寓言"].length)];
-        return `📖 【伊索寓言】\n${story}`;
-    } else if (type.includes("克雷洛夫")) {
-        const story = stories["克雷洛夫寓言"][Math.floor(Math.random() * stories["克雷洛夫寓言"].length)];
-        return `📖 【克雷洛夫寓言】\n${story}`;
-    } else if (type.includes("成语")) {
-        const story = stories["成语故事"][Math.floor(Math.random() * stories["成语故事"].length)];
-        return `📖 【成语故事】\n${story}`;
-    } else {
-        const allStories = [...stories["伊索寓言"], ...stories["克雷洛夫寓言"], ...stories["成语故事"]];
-        const story = allStories[Math.floor(Math.random() * allStories.length)];
-        return `📖 给你讲个故事：\n${story}`;
-    }
+    if (type.includes("伊索")) return `📖 【伊索寓言】\n${stories["伊索寓言"][Math.floor(Math.random() * 4)]}`;
+    if (type.includes("克雷洛夫")) return `📖 【克雷洛夫寓言】\n${stories["克雷洛夫寓言"][Math.floor(Math.random() * 3)]}`;
+    if (type.includes("成语")) return `📖 【成语故事】\n${stories["成语故事"][Math.floor(Math.random() * 4)]}`;
+    const all = [...stories["伊索寓言"], ...stories["克雷洛夫寓言"], ...stories["成语故事"]];
+    return `📖 故事：\n${all[Math.floor(Math.random() * all.length)]}`;
 }
-// 笑话库
-const jokes = [
-    "为什么数学书总是很忧伤？因为它有太多问题。😂",
-    "为什么鸡蛋去上学？因为它要考（烤）试！🥚",
-    "什么水果会打电话？梨（铃）啊！🍐",
-    "为什么小明考试总是睡觉？因为他想做梦考！😴",
-    "鱼为什么不上学？因为怕被鱿鱼（由于）！🐟",
-    "什么动物最会做饭？章鱼（章鱼烧）！🐙",
-    "为什么太阳戴墨镜？因为它太亮（靓）了！😎"
-];
-// 古诗库
-const poems = [
-    "🌙 床前明月光，疑是地上霜。举头望明月，低头思故乡。——李白《静夜思》",
-    "🌸 春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。——孟浩然《春晓》",
-    "🌾 锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。——李绅《悯农》",
-    "⛰️ 白日依山尽，黄河入海流。欲穷千里目，更上一层楼。——王之涣《登鹳雀楼》",
-    "🍃 离离原上草，一岁一枯荣。野火烧不尽，春风吹又生。——白居易《赋得古原草送别》",
-    "🦢 鹅鹅鹅，曲项向天歌。白毛浮绿水，红掌拨清波。——骆宾王《咏鹅》"
-];
-// 脑筋急转弯
-const riddles = [
-    "🤔 什么东西越洗越脏？\n💡 答案：水！",
-    "🤔 什么字人人都会念错？\n💡 答案：'错'字！",
-    "🤔 什么东西越热越爱出来？\n💡 答案：汗！",
-    "🤔 什么门永远关不上？\n💡 答案：球门！"
-];
-// 百科问答
-function get百科(question) {
-    const q = question.toLowerCase();
-    if (q.includes("太阳")) return "☀️ 太阳是太阳系的中心恒星，表面温度约5500°C！";
-    if (q.includes("月亮")) return "🌙 月亮是地球的卫星，距离地球约38万公里。";
-    if (q.includes("地球")) return "🌍 地球是太阳系第三颗行星，目前已知唯一有生命的星球！";
-    if (q.includes("恐龙")) return "🦕 恐龙生活在2.3亿年前，灭绝于6600万年前。";
-    if (q.includes("长城")) return "🏯 长城是中国古代防御工程，总长超过2万公里！";
-    if (q.includes("熊猫")) return "🐼 大熊猫是中国的国宝，喜欢吃竹子！";
+
+const jokes = ["数学书忧伤？问题太多😂", "鸡蛋上学？要考试🥚", "梨打电话？梨（铃）🍐", "小明睡觉？做梦考😴"];
+const poems = ["🌙 床前明月光——李白", "🌸 春眠不觉晓——孟浩然", "🌾 锄禾日当午——李绅", "⛰️ 白日依山尽——王之涣"];
+const riddles = ["🤔 越洗越脏？💡水", "🤔 字人人念错？💡错字", "🤔 越热越出来？💡汗", "🤔 门关不上？💡球门"];
+function get百科(q) {
+    if (q.includes("太阳")) return "☀️ 太阳是恒星，表面5500°C";
+    if (q.includes("月亮")) return "🌙 月亮是卫星，距地球38万公里";
+    if (q.includes("地球")) return "🌍 地球是第三行星，唯一有生命";
+    if (q.includes("熊猫")) return "🐼 熊猫是国宝，爱吃竹子";
     return null;
 }
-// 核心关键词检测
+
+// 核心AI
 async function ask(question) {
     const q = question.toLowerCase();
     
+    // 翻译模式优先
+    if (translateMode) {
+        const result = translateWord(question);
+        await typeMessage(result);
+        translateMode = false;
+        await typeMessage("🔍 翻译模式已关闭，继续正常聊天~");
+        return;
+    }
+    
+    // 夸奖
+    if (q.includes("你真") || q.includes("厉害") || q.includes("聪明") || q.includes("棒") || q.includes("牛逼")) {
+        const replies = ["嘿嘿，谢谢夸奖！😊", "没有啦，我就是个简单的AI～", "你也很厉害！👍", "我会继续努力的！💪", "被你夸得我都不好意思了 🤖"];
+        await typeMessage(replies[Math.floor(Math.random() * replies.length)]);
+        return;
+    }
+    
     // 问候
-    if (q.includes("你好") || q.includes("嗨") || q.includes("hi") || q.includes("hello")) {
-        const greetings = ["你好呀！👋", "嘿！今天过得怎么样？😊", "嗨！有什么可以帮你的？🤗", "你好！我是智能AI，随便问~"];
+    if (q.includes("你好") || q.includes("嗨") || q.includes("hi")) {
+        const greetings = ["你好呀！👋", "嘿！今天过得怎么样？😊", "嗨！有什么可以帮你的？🤗"];
         await typeMessage(greetings[Math.floor(Math.random() * greetings.length)]);
         return;
     }
     
-    // 数学计算（优先级最高）
+    // 数学
     const mathResult = doMath(question);
-    if (mathResult) {
-        await typeMessage(mathResult);
-        return;
-    }
+    if (mathResult) { await typeMessage(mathResult); return; }
     
-    // 天气查询
+    // 天气
     if (q.includes("天气")) {
-        let city = question.replace(/天气/g, '').trim();
-        if (!city) city = "阿拉善左旗";
-        await typeMessage("🌤️ 正在查询天气...");
+        let city = question.replace(/天气/g, '').trim() || "阿拉善左旗";
+        await typeMessage("🌤️ 查询中...");
         const weather = await getWeather(city);
         await typeMessage(weather);
         return;
     }
     
-    // 故事/寓言
+    // 故事
     if (q.includes("故事") || q.includes("寓言")) {
-        let storyType = "";
-        if (q.includes("伊索")) storyType = "伊索";
-        else if (q.includes("克雷洛夫")) storyType = "克雷洛夫";
-        else if (q.includes("成语")) storyType = "成语";
+        let storyType = q.includes("伊索") ? "伊索" : q.includes("克雷洛夫") ? "克雷洛夫" : q.includes("成语") ? "成语" : "";
         await typeMessage(tellStory(storyType));
         return;
     }
     
     // 笑话
-    if (q.includes("笑话") || q.includes("搞笑")) {
-        const joke = jokes[Math.floor(Math.random() * jokes.length)];
-        await typeMessage(`😂 ${joke}`);
-        return;
-    }
+    if (q.includes("笑话")) { await typeMessage(`😂 ${jokes[Math.floor(Math.random() * 4)]}`); return; }
     
     // 古诗
-    if (q.includes("古诗") || q.includes("诗") || q.includes("背诗") || q.includes("念诗")) {
-        const poem = poems[Math.floor(Math.random() * poems.length)];
-        await typeMessage(`📜 ${poem}`);
-        return;
-    }
+    if (q.includes("诗")) { await typeMessage(`📜 ${poems[Math.floor(Math.random() * 4)]}`); return; }
     
     // 脑筋急转弯
-    if (q.includes("脑筋") || q.includes("急转弯")) {
-        const riddle = riddles[Math.floor(Math.random() * riddles.length)];
-        await typeMessage(`🧩 ${riddle}`);
-        return;
-    }
+    if (q.includes("脑筋") || q.includes("急转弯")) { await typeMessage(`🧩 ${riddles[Math.floor(Math.random() * 4)]}`); return; }
     
     // 百科
-    const百科Result = get百科(q);
-    if (百科Result) {
-        await typeMessage(`📚 ${百科Result}`);
-        return;
-    }
-    
-    // 夸奖
-    if (q.includes("你真") || q.includes("厉害") || q.includes("聪明") || q.includes("棒")) {
-        const replies = ["嘿嘿，谢谢夸奖！😊", "没有啦，我就是个简单的AI～", "你也很厉害！👍", "我会继续努力的！💪"];
-        await typeMessage(replies[Math.floor(Math.random() * replies.length)]);
-        return;
-    }
+    const wiki = get百科(q);
+    if (wiki) { await typeMessage(`📚 ${wiki}`); return; }
     
     // 关于自己
-    if (q.includes("你是谁") || q.includes("叫什么")) {
-        await typeMessage("我是智能AI助手！能检测设备、查公历/农历日期、随机数学计算，还会查天气、讲故事、背古诗、讲笑话～虽然有点傻，但很努力！🤖");
+    if (q.includes("你是谁")) { await typeMessage("我是智能AI助手！能翻译、查天气、讲故事、背古诗、讲笑话～🤖"); return; }
+    
+    // 帮助
+    if (q.includes("帮助") || q.includes("功能")) {
+        await typeMessage("我能做的事：\n🌐 点击【翻译模式】输入单词翻译\n📱 设备检测 | 📅 公历农历\n☀️ 天气 | 📖 故事 | 😂 笑话 | 📜 古诗 | 🧩 脑筋急转弯");
         return;
     }
     
-    // 帮助/功能
-    if (q.includes("帮助") || q.includes("能做什么") || q.includes("功能")) {
-        await typeMessage("我能做的事：\n📱💻 点击【检测设备】识别手机/电脑\n📅 点击【公历/农历日期】查日期（含星期，联网/本地双兼容）\n📝 点击【随机数学】做预设算式计算\n☀️ 查天气（如 北京天气）\n📖 讲伊索寓言/克雷洛夫寓言/成语故事\n😂 讲笑话 | 📜 背古诗 | 🧩 脑筋急转弯\n📚 简单百科 | 💬 日常聊天！");
-        return;
-    }
-    
-    // 默认回复
-    const defaultReplies = [
-        "这个我还不太会，你可以试试：\n• 点击顶部按钮检测设备/查日期/随机数学\n• 天气：北京天气\n• 故事：讲个伊索寓言\n• 笑话：讲个笑话",
-        "🤔 我听不太懂，试试这些：\n点击顶部功能按钮，或发 天气/故事/笑话/古诗",
-        "试试顶部的【检测设备】【公历日期】【随机数学】按钮，超好用哦！也可以让我讲笑话、查天气～"
-    ];
-    await typeMessage(defaultReplies[Math.floor(Math.random() * defaultReplies.length)]);
+    // 默认
+    const defaults = ["试试点击【翻译模式】翻译单词，或说 北京天气、讲个故事、讲个笑话～", "点顶部按钮试试！翻译模式超好用～", "输入 apple 或 lol 看看翻译效果？"];
+    await typeMessage(defaults[Math.floor(Math.random() * defaults.length)]);
 }
-// 发送按钮点击
+
+// 发送
 send.onclick = async () => {
     const q = text.value.trim();
     if (!q) return;
@@ -701,35 +641,27 @@ send.onclick = async () => {
     text.value = "";
     await ask(q);
 };
-// 回车发送
-text.addEventListener("keypress", e => {
-    if (e.key === "Enter") send.click();
+text.addEventListener("keypress", e => { if (e.key === "Enter") send.click(); });
+
+// 按钮事件
+document.getElementById("translateBtn").addEventListener('click', () => {
+    translateMode = true;
+    typeMessage("🌐 翻译模式已开启！\n直接输入单词，我会帮你翻译~ 支持 apple→苹果、lol→哈哈、苹果→apple 等");
 });
-// 关键词标签点击
+document.getElementById("detectDevice").addEventListener('click', detectDevice);
+document.getElementById("solarDate").addEventListener('click', async () => { typeMessage(await getSolarDate()); });
+document.getElementById("lunarDate").addEventListener('click', async () => { typeMessage(await getLunarDate()); });
+
 document.querySelectorAll('.keyword-tag').forEach(tag => {
     tag.addEventListener('click', () => {
         if (tag.id === "mathRandom") {
-            const randomFormula = getRandomMathFormula();
-            text.value = randomFormula;
+            text.value = getRandomMathFormula();
             send.click();
-        } else {
-            const msg = tag.dataset.msg;
-            text.value = msg;
+        } else if (tag.dataset.msg) {
+            text.value = tag.dataset.msg;
             send.click();
         }
     });
-});
-// 顶部功能按钮点击事件（设备检测+公历+农历）
-document.getElementById("detectDevice").addEventListener('click', () => {
-    detectDevice();
-});
-document.getElementById("solarDate").addEventListener('click', async () => {
-    const solar = await getSolarDate();
-    await typeMessage(solar);
-});
-document.getElementById("lunarDate").addEventListener('click', async () => {
-    const lunar = await getLunarDate();
-    await typeMessage(lunar);
 });
 </script>
 </body>
