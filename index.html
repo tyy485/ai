@@ -46,6 +46,31 @@
         .header p {
             font-size: 12px;
             opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .func-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .func-btn {
+            padding: 6px 16px;
+            border: 1px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .func-btn:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
         }
         
         .keywords-cloud {
@@ -182,6 +207,23 @@
             background: #667eea;
             border-radius: 3px;
         }
+
+        /* 设备适配小样式 */
+        @media screen and (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            #chat {
+                height: 350px;
+            }
+            .func-buttons {
+                gap: 8px;
+            }
+            .func-btn {
+                padding: 5px 12px;
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -192,9 +234,16 @@
             <span>智能AI</span>
             <span>🤖</span>
         </h1>
-        <p>关键词检测 | 加减乘除 | 天气 | 故事 | 笑话 | 古诗 | 百科 | 聊天</p>
+        <p>设备检测 | 公历/农历日期 | 随机数学算式 | 天气 | 故事 | 笑话 | 古诗 | 百科</p>
+        <!-- 整合：设备检测+公历+农历 功能按钮区 -->
+        <div class="func-buttons">
+            <button class="func-btn" id="detectDevice">检测设备</button>
+            <button class="func-btn" id="solarDate">公历日期</button>
+            <button class="func-btn" id="lunarDate">农历日期</button>
+        </div>
         <div class="keywords-cloud">
-            <span class="keyword-tag" data-msg="1+1=？">📝 数学</span>
+            <!-- 随机数学算式标签 -->
+            <span class="keyword-tag" id="mathRandom">📝 随机数学</span>
             <span class="keyword-tag" data-msg="阿拉善左旗天气">☀️ 天气</span>
             <span class="keyword-tag" data-msg="讲个伊索寓言">📖 伊索寓言</span>
             <span class="keyword-tag" data-msg="讲个克雷洛夫寓言">📚 克雷洛夫</span>
@@ -210,32 +259,23 @@
         <div class="msg ai">
             <div class="bubble">
                 👋 你好！我是智能AI助手！<br><br>
-                我能做这些事：<br>
-                📝 数学计算：+ - ×(x/*) ÷(/) 都支持，例：05x3、10÷2a<br>
-                ☀️ 天气查询：说 "阿拉善左旗天气"（支持全国城市）<br>
-                📖 讲伊索寓言："讲个伊索寓言"<br>
-                📚 讲克雷洛夫寓言："讲个克雷洛夫寓言"<br>
-                📖 成语故事："讲个成语故事"<br>
-                😂 讲笑话："讲个笑话"<br>
-                📜 背古诗："背首诗" 或 "念首诗"<br>
-                🧩 脑筋急转弯："来个脑筋急转弯"<br>
-                💬 聊天："你好"、"你真聪明"<br>
-                ❓ 百科问答："什么是..."<br><br>
-                试试看吧！点上面的关键词试试~
+                📱💻 点击顶部【检测设备】可识别手机/电脑<br>
+                📅 点击【公历日期/农历日期】查当日日期（含星期，联网/本地都能用）<br>
+                📝 点击【随机数学】可随机出预设算式计算<br>
+                其他功能：天气查询、寓言/成语故事、笑话、古诗、脑筋急转弯、日常聊天～<br><br>
+                快来点击顶部按钮试试吧！
             </div>
         </div>
     </div>
     <div class="input-area">
-        <input type="text" id="text" placeholder="输入问题，比如：阿拉善左旗天气、05x3、讲个故事..." autocomplete="off">
+        <input type="text" id="text" placeholder="输入问题，比如：北京天气、讲个笑话..." autocomplete="off">
         <button id="send">发送</button>
     </div>
 </div>
-
 <script>
 const chat = document.getElementById("chat");
 const text = document.getElementById("text");
 const send = document.getElementById("send");
-
 // 添加消息
 function addMessage(content, isUser, isHtml = false) {
     const div = document.createElement("div");
@@ -254,7 +294,6 @@ function addMessage(content, isUser, isHtml = false) {
     chat.scrollTop = chat.scrollHeight;
     return bubble;
 }
-
 // 模拟打字效果
 async function typeMessage(content, isHtml = false) {
     const bubble = addMessage('<span class="typing"></span>', false, false);
@@ -267,14 +306,157 @@ async function typeMessage(content, isHtml = false) {
     }
     chat.scrollTop = chat.scrollHeight;
 }
-
-// 重写数学计算：兼容加减乘除，乘×/x/*，除÷/，非数字转0，开头0忽略
+// 1. 设备检测（改为按钮触发，无外网可用）
+function detectDevice() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    let deviceType = "💻 电脑设备（Windows/Mac/Linux等）";
+    if (/(mobile|android|iphone|ipad|ipod|blackberry|iemobile|opera mini)/.test(userAgent)) {
+        deviceType = "📱 移动设备（手机/平板）";
+    }
+    typeMessage(`✅ 设备检测结果：${deviceType}`);
+}
+// 2. 农历转换核心方法（本地计算，无需联网）
+function solar2lunar(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const lunarData = [0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+        0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+        0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+        0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+        0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+        0x06ca0,0x0b550,0x15355,0x04da0,0x0a5d0,0x14573,0x052d0,0x0a9a8,0x0e950,0x06aa0,
+        0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+        0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b5a0,0x195a6,
+        0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+        0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+        0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+        0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+        0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+        0x05aa0,0x076a3,0x096d0,0x04bd7,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+        0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0];
+    const lunarMonthNames = ["正月","二月","三月","四月","五月","六月","七月","八月","九月","十月","冬月","腊月"];
+    const lunarDayNames = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+        "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+        "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+    let offset = (new Date(year, 0, 1).getTime() - new Date(1900, 0, 31).getTime()) / 86400000;
+    let lunarYear = 1900, lunarMonth = 1, lunarDay = 1, leapMonth = 0;
+    while (lunarYear < 2100 && offset > 0) {
+        let days = getLunarYearDays(lunarYear);
+        if (offset >= days) {
+            offset -= days;
+            lunarYear++;
+        } else {
+            let leap = getLeapMonth(lunarYear);
+            let isLeap = false;
+            for (let i = 1; i <= 12; i++) {
+                if (leap > 0 && i === leap + 1) {
+                    if (isLeap) {
+                        i--;
+                        isLeap = false;
+                        continue;
+                    } else {
+                        isLeap = true;
+                        leapMonth = i;
+                    }
+                }
+                let md = getLunarMonthDays(lunarYear, i);
+                if (offset >= md) {
+                    offset -= md;
+                    lunarMonth++;
+                } else {
+                    lunarDay += offset;
+                    offset = 0;
+                    break;
+                }
+            }
+        }
+    }
+    if (leapMonth > 0 && lunarMonth === leapMonth + 1) lunarMonth = 0;
+    return {
+        year: lunarYear,
+        month: lunarMonth,
+        day: lunarDay,
+        monthName: lunarMonthNames[lunarMonth - 1],
+        dayName: lunarDayNames[lunarDay - 1],
+        isLeap: lunarMonth === 0
+    };
+    function getLunarYearDays(y) {
+        let days = 348;
+        for (let i = 0x8000; i > 0x8; i >>= 1) days += (lunarData[y - 1900] & i) ? 1 : 0;
+        return days + getLeapMonthDays(y);
+    }
+    function getLeapMonth(y) { return (lunarData[y - 1900] & 0xf); }
+    function getLeapMonthDays(y) {
+        let lm = getLeapMonth(y);
+        return lm === 0 ? 0 : (lunarData[y - 1900] & (0x10000 >> lm)) ? 30 : 29;
+    }
+    function getLunarMonthDays(y, m) {
+        return (lunarData[y - 1900] & (0x10000 >> m)) ? 30 : 29;
+    }
+}
+// 3. 获取公历日期（联网优先，无网调用系统时间，含星期）
+async function getSolarDate() {
+    try {
+        const res = await fetch('https://worldtimeapi.org/api/ip');
+        if (res.ok) {
+            const data = await res.json();
+            const date = new Date(data.utc_datetime);
+            const weekList = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const week = weekList[date.getDay()];
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hour = String(date.getHours()).padStart(2, '0');
+            const minute = String(date.getMinutes()).padStart(2, '0');
+            return `📅 【公历日期（联网精准）】\n${year}年${month}月${day}日 ${week}\n当前时间：${hour}:${minute}`;
+        } else {
+            throw new Error('联网失败');
+        }
+    } catch (e) {
+        const now = new Date();
+        const weekList = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const week = weekList[now.getDay()];
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `📅 【公历日期（本地系统时间）】\n${year}年${month}月${day}日 ${week}\n（无网络，时间为设备本地时间）`;
+    }
+}
+// 4. 获取农历日期（联网优先，无网本地计算，含星期）
+async function getLunarDate() {
+    try {
+        const res = await fetch('https://api.vvhan.com/api/lunar?date=' + new Date().toLocaleDateString());
+        if (res.ok) {
+            const data = await res.json();
+            const weekList = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const week = weekList[new Date().getDay()];
+            return `🌙 【农历日期（联网精准）】\n${data.lunarYear}年${data.lunarMonth}${data.lunarDay} ${week}\n公历对应：${data.solarDate}`;
+        } else {
+            throw new Error('联网失败');
+        }
+    } catch (e) {
+        const now = new Date();
+        const weekList = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const week = weekList[now.getDay()];
+        const lunar = solar2lunar(now);
+        const solarYear = now.getFullYear();
+        const solarMonth = String(now.getMonth() + 1).padStart(2, '0');
+        const solarDay = String(now.getDate()).padStart(2, '0');
+        return `🌙 【农历日期（本地计算）】\n${lunar.year}年${lunar.isLeap ? '闰' : ''}${lunar.monthName}${lunar.dayName} ${week}\n公历对应：${solarYear}年${solarMonth}月${solarDay}日\n（无网络，农历为本地计算结果）`;
+    }
+}
+// 5. 随机数学算式（预设6个算式，点击随机挑一个）
+const mathFormulas = ["1+1", "5+5", "3×8", "6-2", "100-1", "546+64"];
+function getRandomMathFormula() {
+    const randomIndex = Math.floor(Math.random() * mathFormulas.length);
+    return mathFormulas[randomIndex];
+}
+// 数学计算：兼容加减乘除，乘×/x/*，除÷/
 function doMath(question) {
-    // 匹配运算符号：+ - × x * ÷ /
     const opMatch = question.match(/[\+\-\×x\*÷\/]/);
     if (!opMatch) return null;
     const op = opMatch[0];
-    // 统一运算符号（方便计算）
     let calcOp = op;
     let showOp = op;
     if (op === '×' || op === 'x' || op === '*') {
@@ -284,10 +466,8 @@ function doMath(question) {
         calcOp = '/';
         showOp = '÷';
     }
-    // 按符号分割，处理两边的数值
     const parts = question.split(new RegExp(`[${op}]`, 'g'));
     if (parts.length < 2) return null;
-    // 数值处理：提取数字→去开头0→转数字，非数字转0
     const handleNum = (str) => {
         let numStr = str.replace(/\D/g, "");
         if (numStr.startsWith("0") && numStr.length > 1) numStr = numStr.slice(1);
@@ -295,7 +475,6 @@ function doMath(question) {
     };
     const num1 = handleNum(parts[0]);
     const num2 = handleNum(parts[1]);
-    // 计算逻辑，除数为0单独处理
     let result;
     switch (calcOp) {
         case '+': result = num1 + num2; break;
@@ -306,12 +485,10 @@ function doMath(question) {
             break;
         default: return null;
     }
-    // 拼接返回结果
     return result === '除数不能为0' 
         ? `📝 计算：${num1} ${showOp} ${num2} = ${result}`
         : `📝 计算：${num1} ${showOp} ${num2} = ${result}`;
 }
-
 // 天气查询
 async function getWeather(city) {
     try {
@@ -323,7 +500,6 @@ async function getWeather(city) {
         let condition = parts[0] || "未知";
         let temp = parts[1] || "?";
         let wind = parts[2] || "";
-        // 天气图标映射
         const icons = {
             'Sunny': '☀️', 'Clear': '🌙', 'Cloudy': '☁️', 'Partly cloudy': '⛅',
             'Overcast': '☁️', 'Rain': '🌧️', 'Light rain': '🌦️', 'Snow': '❄️',
@@ -350,7 +526,6 @@ async function getWeather(city) {
         return mockWeather["默认"];
     }
 }
-
 // 故事库
 const stories = {
     "伊索寓言": [
@@ -371,7 +546,6 @@ const stories = {
         "🐉 叶公好龙：叶公特别喜欢龙，家里到处画龙。真龙听说了来看他，他吓得躲起来。"
     ]
 };
-
 // 讲故事
 function tellStory(type) {
     if (type.includes("伊索")) {
@@ -389,7 +563,6 @@ function tellStory(type) {
         return `📖 给你讲个故事：\n${story}`;
     }
 }
-
 // 笑话库
 const jokes = [
     "为什么数学书总是很忧伤？因为它有太多问题。😂",
@@ -400,7 +573,6 @@ const jokes = [
     "什么动物最会做饭？章鱼（章鱼烧）！🐙",
     "为什么太阳戴墨镜？因为它太亮（靓）了！😎"
 ];
-
 // 古诗库
 const poems = [
     "🌙 床前明月光，疑是地上霜。举头望明月，低头思故乡。——李白《静夜思》",
@@ -410,7 +582,6 @@ const poems = [
     "🍃 离离原上草，一岁一枯荣。野火烧不尽，春风吹又生。——白居易《赋得古原草送别》",
     "🦢 鹅鹅鹅，曲项向天歌。白毛浮绿水，红掌拨清波。——骆宾王《咏鹅》"
 ];
-
 // 脑筋急转弯
 const riddles = [
     "🤔 什么东西越洗越脏？\n💡 答案：水！",
@@ -418,7 +589,6 @@ const riddles = [
     "🤔 什么东西越热越爱出来？\n💡 答案：汗！",
     "🤔 什么门永远关不上？\n💡 答案：球门！"
 ];
-
 // 百科问答
 function get百科(question) {
     const q = question.toLowerCase();
@@ -430,24 +600,9 @@ function get百科(question) {
     if (q.includes("熊猫")) return "🐼 大熊猫是中国的国宝，喜欢吃竹子！";
     return null;
 }
-
 // 核心关键词检测
 async function ask(question) {
     const q = question.toLowerCase();
-    
-    // ⭐⭐⭐ 夸奖功能（放在最前面，确保能触发！）⭐⭐⭐
-    if (q.includes("你真") || q.includes("厉害") || q.includes("聪明") || q.includes("棒") || q.includes("牛逼") || q.includes("牛")) {
-        const replies = [
-            "嘿嘿，谢谢夸奖！😊", 
-            "没有啦，我就是个简单的AI～", 
-            "你也很厉害！👍", 
-            "我会继续努力的！💪",
-            "被你夸得我都不好意思了 🤖",
-            "还行还行，主要是你教得好！🎓"
-        ];
-        await typeMessage(replies[Math.floor(Math.random() * replies.length)]);
-        return;
-    }
     
     // 问候
     if (q.includes("你好") || q.includes("嗨") || q.includes("hi") || q.includes("hello")) {
@@ -511,27 +666,33 @@ async function ask(question) {
         return;
     }
     
+    // 夸奖
+    if (q.includes("你真") || q.includes("厉害") || q.includes("聪明") || q.includes("棒")) {
+        const replies = ["嘿嘿，谢谢夸奖！😊", "没有啦，我就是个简单的AI～", "你也很厉害！👍", "我会继续努力的！💪"];
+        await typeMessage(replies[Math.floor(Math.random() * replies.length)]);
+        return;
+    }
+    
     // 关于自己
     if (q.includes("你是谁") || q.includes("叫什么")) {
-        await typeMessage("我是智能AI助手！我会算数、查天气、讲故事、背古诗、讲笑话、脑筋急转弯，还会百科问答！虽然有点傻，但很努力！🤖");
+        await typeMessage("我是智能AI助手！能检测设备、查公历/农历日期、随机数学计算，还会查天气、讲故事、背古诗、讲笑话～虽然有点傻，但很努力！🤖");
         return;
     }
     
     // 帮助/功能
     if (q.includes("帮助") || q.includes("能做什么") || q.includes("功能")) {
-        await typeMessage("我能做的事：\n📝 数学计算（+ - ×(x/*) ÷(/)）\n☀️ 查天气（如 北京天气）\n📖 讲伊索寓言/克雷洛夫寓言/成语故事\n😂 讲笑话\n📜 背古诗\n🧩 脑筋急转弯\n📚 百科问答（如 什么是熊猫）\n💬 陪你聊天！");
+        await typeMessage("我能做的事：\n📱💻 点击【检测设备】识别手机/电脑\n📅 点击【公历/农历日期】查日期（含星期，联网/本地双兼容）\n📝 点击【随机数学】做预设算式计算\n☀️ 查天气（如 北京天气）\n📖 讲伊索寓言/克雷洛夫寓言/成语故事\n😂 讲笑话 | 📜 背古诗 | 🧩 脑筋急转弯\n📚 简单百科 | 💬 日常聊天！");
         return;
     }
     
     // 默认回复
     const defaultReplies = [
-        "这个我还不太会，你可以试试：\n• 数学：05x3、10÷2a、8-3\n• 天气：北京天气\n• 故事：讲个伊索寓言\n• 笑话：讲个笑话\n• 古诗：背首诗\n• 脑筋急转弯",
-        "🤔 我听不太懂，试试这些关键词：\n天气、故事、笑话、古诗、数学、脑筋急转弯、百科",
-        "我的功能有：数学加减乘除、天气查询、讲故事、讲笑话、背古诗、脑筋急转弯！试试看~"
+        "这个我还不太会，你可以试试：\n• 点击顶部按钮检测设备/查日期/随机数学\n• 天气：北京天气\n• 故事：讲个伊索寓言\n• 笑话：讲个笑话",
+        "🤔 我听不太懂，试试这些：\n点击顶部功能按钮，或发 天气/故事/笑话/古诗",
+        "试试顶部的【检测设备】【公历日期】【随机数学】按钮，超好用哦！也可以让我讲笑话、查天气～"
     ];
     await typeMessage(defaultReplies[Math.floor(Math.random() * defaultReplies.length)]);
 }
-
 // 发送按钮点击
 send.onclick = async () => {
     const q = text.value.trim();
@@ -540,19 +701,35 @@ send.onclick = async () => {
     text.value = "";
     await ask(q);
 };
-
 // 回车发送
 text.addEventListener("keypress", e => {
     if (e.key === "Enter") send.click();
 });
-
 // 关键词标签点击
 document.querySelectorAll('.keyword-tag').forEach(tag => {
     tag.addEventListener('click', () => {
-        const msg = tag.dataset.msg;
-        text.value = msg;
-        send.click();
+        if (tag.id === "mathRandom") {
+            const randomFormula = getRandomMathFormula();
+            text.value = randomFormula;
+            send.click();
+        } else {
+            const msg = tag.dataset.msg;
+            text.value = msg;
+            send.click();
+        }
     });
+});
+// 顶部功能按钮点击事件（设备检测+公历+农历）
+document.getElementById("detectDevice").addEventListener('click', () => {
+    detectDevice();
+});
+document.getElementById("solarDate").addEventListener('click', async () => {
+    const solar = await getSolarDate();
+    await typeMessage(solar);
+});
+document.getElementById("lunarDate").addEventListener('click', async () => {
+    const lunar = await getLunarDate();
+    await typeMessage(lunar);
 });
 </script>
 </body>
